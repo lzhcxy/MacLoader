@@ -1,0 +1,19 @@
+[package]
+name = "macloader"
+version = "0.1.1"
+description = "MacLoader - macOS 免杀马生成器 (Tauri + Rust)"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+opt-level = "s"
+strip = true
+panic = "abort"

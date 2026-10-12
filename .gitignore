@@ -1,0 +1,6 @@
+# Rust / Tauri build output
+target/
+
+# 注意：本仓库**故意**不忽略 .DS_Store。
+# maloader-src2/dist/.DS_Store 会被 tauri-codegen 递归嵌入二进制，
+# 是复现参考产物所必需的文件，故必须保留在版本库里。
