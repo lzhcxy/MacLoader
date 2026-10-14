@@ -1,15 +1,16 @@
-# maloader-src2 —— MacLoader.app 反编译还原源码
+# MacLoader-build —— 唯一源码树
 
-本目录是 `/Users/sys0ne/Downloads/MacLoader.app` 的**反编译还原**结果。
-用 `cargo tauri build` 构建后，产物与参考 `.app` **逐字节相同**：
+本目录是 MacLoader 的**唯一**源码树。所有改动都在这里做，不要在别处另建副本。
 
-| 文件 | 参考 sha256 | 本仓库重建 |
-|---|---|---|
-| `Contents/MacOS/macloader` | `d9e5ef2c…b588` | ✅ 一致 |
-| `Contents/Info.plist` | `7e789a1c…3581` | ✅ 一致 |
-| `Contents/Resources/MacLoader.icns` | `c12d8646…217e` | ✅ 一致 |
+## 结构
 
-还原方法与结论见 [`decompiled/反编译报告.md`](decompiled/反编译报告.md)。
+| 路径 | 说明 |
+|---|---|
+| `dist/` | 前端静态页：`index.html` / `style.css` / `app.js` / `shell.js` / `logo.png` / `icons/`。构建时由 `tauri-codegen` 递归嵌入二进制 |
+| `src-tauri/` | Rust 后端（`src/main.rs` 单文件）+ `tauri.conf.json` |
+| `tools/verify.sh` | 与参考 `.app` 逐字节核对（⚠ 见下方「已知问题」） |
+| `tools/extract.py` | 从 `.app` 二进制里抠出内嵌资源（`index.html` / `style.css` / `app.js` 都是 brotli 流） |
+| `make_app.sh` | 手工拼 `.app`。Info.plist 与 `cargo tauri build` 产出的不一致，一般不用 |
 
 ## 构建
 
@@ -19,21 +20,22 @@ cargo tauri build
 # → src-tauri/target/release/bundle/macos/MacLoader.app
 ```
 
-> ⚠ 不要用 `make_app.sh` 去“复现参考产物”—— 它手工组装的 `.app`
-> （Info.plist 可执行名/图标名/版本下限都不同）与参考产物不一致。
-> 参考产物是 `cargo tauri build` 直接出的完整 bundle。
+窗口配置在 `src-tauri/tauri.conf.json`：默认 1080×720，下限 1024×700
+（下限是按三列布局的最小不滚动尺寸定的，改布局要连带复核）。
 
-## 还原工具
+## 改前端的注意事项
 
-```bash
-python3 tools/extract.py <MacLoader.app> <输出目录>
-```
+1. **改完同步 `../ui-preview/`**（预览靠 `mock.js` 顶掉 `window.__TAURI__`）
+2. **用真实 WKWebView 量过再提交。** Blink 和 WebKit 的布局结果可能不同 ——
+   CSS `columns` 多列就是踩过的坑：两个引擎均衡结果不一致，
+   Chrome 里内容高 531px 放得下，WKWebView 里变 744px 直接出滚动条。
+3. **`dist/` 里不要放临时文件**（`.bak`、草稿等）。`tauri-codegen` 会递归嵌入整个目录，
+   产物体积和内容都会受影响。
+4. `.DS_Store` 保留在版本库里是刻意的，见根目录 `.gitignore` 注释。
 
-从二进制里抠出 `loader.cpp`（明文）与图标（原样嵌入）等。
+## 已知问题
 
-## 与 maloader-src 的关系
-
-- `maloader-src/`：开发版，含后续改进（如证书缓存修复）。
-- `maloader-src2/`：**参考产物对应的确切源码**，用于复现 / 对照。
-
-两者 `main.rs` 及绝大部分资源相同；差异见反编译报告第五节。
+`tools/verify.sh` 的默认参考路径是 `~/Downloads/MacLoader.app`，**该文件已不存在**。
+而且本源码树的前端已相对参考产物做了布局修改，逐字节复现已不再是目标。
+需要回归校验的话，建议改成校验「构建产物内嵌的 `index.html`/`style.css`/`app.js`
+与 `dist/` 逐字节一致」—— 这才是当前真正会出错的环节。
