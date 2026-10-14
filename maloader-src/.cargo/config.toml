@@ -1,0 +1,6 @@
+# 使用国内镜像加速 crate 下载 (rsproxy.cn)
+[source.crates-io]
+replace-with = 'rsproxy-sparse'
+
+[source.rsproxy-sparse]
+registry = "sparse+https://rsproxy.cn/index/"

