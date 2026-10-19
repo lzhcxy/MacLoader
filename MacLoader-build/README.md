@@ -74,6 +74,22 @@ cd src-tauri && cargo test --release
    产物体积和内容都会受影响。`tools/verify.sh` 会检查这一项。
 4. `.DS_Store` 保留在版本库里是刻意的，见根目录 `.gitignore` 注释。
 
+## 产物自审的定位
+
+**特征清单，不是纯净度打分。**
+
+凡是静态引擎会抓的特征，无论用户能否消除，一律如实列出并标注来源：
+
+| 维度 | 看什么 | 能否消除 |
+|---|---|---|
+| 导入表特征（inject） | IAT 里的注入类 API | ✅ 能 —— 说明引入了额外静态依赖 |
+| 导入表特征（mem） | IAT 里的内存类 API | ❌ 不能 —— mingw CRT 的 pseudo-reloc 必然带入，任何配置恒定存在 |
+| 明文 API 名 | 字节层面的 API 名子串 | ⚠ 部分 —— loader 的 DJB2 哈希源串，需改成编译期常量 |
+
+分数的意义仅在于「清单里 pass 项占多少」，不代表"越接近 100 越安全"。
+改不掉的特征照样扣分会让人误以为配置有问题，所以这类项判 `warn` 并写明
+"工具链固有成本"，由使用者自己权衡。
+
 ## 版本记录
 
 ### 1.3.0
@@ -86,7 +102,7 @@ cd src-tauri && cargo test --release
 | P0 | `MACLOADER_SEED` 承诺逐字节复现但做不到（唯一差异在 PE `CheckSum`，mingw 按输出布局算，不受种子控制） | `generate.rs` 在签名前调用 `pe::clear_checksum` 归零 |
 | P1 | `cert_size` 读的是 SECURITY 目录的 VirtualAddress（文件偏移）而非 Size，自审显示「有证书表 (245760 bytes)」实为偏移 | `pe.rs` 改读 Size 字段 |
 | P1 | GUI 完全没有 harden 入口，`hardenList()` 是返回 `[]` 的死桩，CLI 的五项加固 GUI 用不到 | 新增复选框组 + stomp-dll 输入 + stomp×protect 互斥联动 |
-| P2 | 自审「可疑导入」全文搜子串，把 DJB2 哈希源串也算进去 → 100% 误报 | 改为解析真实 IAT；mingw CRT 固有导入单列为说明而非告警 |
+| P2 | 自审「可疑导入」全文搜子串，把 DJB2 哈希源串也算进去 → 100% 误报 | 拆成两维特征清单：IAT（按 inject/mem 分类标注来源）+ 明文 API 名（独立维度），命中项全部如实列出 |
 
 单元测试 118 → 129，新增的回归用例覆盖：纯可打印二进制保真（1..64 字节）、
 种子复现、SECURITY Size 读取、IAT 检测正负例。
