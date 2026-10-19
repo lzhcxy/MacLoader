@@ -1,6 +1,7 @@
 /* ==========================================================================
-   shell.js —— 外壳交互：四视图路由 / 预设分段控件 / 边栏收起 / 日志抽屉同步
-   视图：c2（构建主界面） · ws（Webshell 占位） · settings（待规划） · about
+   shell.js —— 外壳交互：视图路由 / 预设分段控件 / 边栏收起 / 日志抽屉同步
+   视图：c2（构建） · matrix（变体矩阵） · ws（Webshell） · inspect（自审）
+        · settings · about
    ========================================================================== */
 (function () {
   const $ = (s, r = document) => r.querySelector(s);
@@ -9,7 +10,10 @@
   const title = $("#viewTitle");
   const badge = $("#viewBadge");
   const navItems = $$(".navitem");
-  const VIEWS = ["c2", "ws", "settings", "about"];
+  const VIEWS = ["c2", "matrix", "ws", "inspect", "settings", "about"];
+
+  /* 每个视图在顶栏显示的主按钮（其余隐藏） */
+  const ACTIONS = { c2: "genBtn", matrix: "mxBtn", ws: "wsBtn" };
 
   function setView(view) {
     VIEWS.forEach((v) => document.body.classList.toggle("view-" + v, v === view));
@@ -20,11 +24,23 @@
     title.textContent = btn.dataset.title || "";
     badge.textContent = btn.dataset.badge || "";
 
+    // 顶栏只留当前视图的主操作
+    Object.entries(ACTIONS).forEach(([v, id]) => {
+      const el = $(id === "genBtn" ? "#genBtn" : "#" + id);
+      if (el) el.classList.toggle("hidden", v !== view);
+    });
+
     // 非构建视图一律收起日志抽屉（它只服务于 C2 构建流程）
-    if (view !== "c2") {
+    if (view === "c2") {
+      const d = $("#drawerBtn");
+      if (d) d.classList.remove("hidden");
+    } else {
       document.body.classList.remove("log-open");
       const d = $("#drawerBtn");
-      if (d) d.classList.remove("is-open");
+      if (d) {
+        d.classList.remove("is-open");
+        d.classList.add("hidden");
+      }
     }
   }
 
@@ -99,8 +115,14 @@
   else mq.addListener(() => { if (theme === "auto") applyTheme(); }); // 老版 Safari
   applyTheme();
 
-  /* ---------- 预览锚点：#ws / #settings / #about / #logopen ---------- */
-  const anchors = { "#ws": "ws", "#settings": "settings", "#about": "about" };
+  /* ---------- 预览锚点 ---------- */
+  const anchors = {
+    "#ws": "ws",
+    "#matrix": "matrix",
+    "#inspect": "inspect",
+    "#settings": "settings",
+    "#about": "about",
+  };
   const target = anchors[location.hash];
   if (target) setView(target);
   if (location.hash === "#logopen") {
@@ -227,4 +249,7 @@
   }
 
   obMaybeShow();
+
+  // 暴露给 app.js / 预览锚点
+  window.__setView = setView;
 })();

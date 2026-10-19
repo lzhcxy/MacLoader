@@ -1,7 +1,17 @@
 # MacLoader
 
-macOS 上的 Windows PE 构建器。后端 Tauri 2 + Rust，前端跑在 WKWebView 里，
-界面资源由 `tauri-codegen` 递归嵌入二进制。
+macOS 上的 Windows PE 构建器（含 Webshell 生成）。后端 Tauri 2 + Rust，
+前端跑在 WKWebView 里，界面资源由 `tauri-codegen` 递归嵌入二进制。
+
+## 功能模块
+
+| 模块 | 说明 |
+|---|---|
+| **C2 免杀** | 选 payload → 编码 / 架构 / 执行方式 / 免杀增强 → 交叉编译出带资源伪装与自签名的 Windows exe |
+| **变体矩阵** | 一次生成 16 个 exe，每个相对基线只改一处，实测后可直接归因到具体变量 |
+| **Webshell 免杀** | PHP 生成：编码链（XOR/Base64/逆序/分块）+ 变量随机化 + 字符串拆分 |
+| **产物自审** | 对生成的 exe 做纯静态检查：熵值、RWX 节、资源、签名、时间戳、可疑字符串，给出 0-100 分 |
+| **配置方案** | 保存 / 载入 / 删除命名配置，并自动记忆上次配置 |
 
 ## 目录结构
 
@@ -29,7 +39,31 @@ git checkout 56dd699 -- maloader-src
 cd MacLoader-build/src-tauri
 cargo tauri build
 # → src-tauri/target/release/bundle/macos/MacLoader.app
+cd .. && ./tools/verify.sh    # 校验产物与 dist/ 一致性
+cargo test --release          # 单元测试
 ```
+
+## 命令行
+
+GUI 之外也提供无界面模式，便于批量与自动化：
+
+```bash
+# PE 构建
+macloader --cli --payload p.bin --out-dir out --encoding chunk --icon lib:pdf
+
+# 变体矩阵（16 个只差一个变量的 exe）
+macloader --cli --payload p.bin --out-dir out --matrix
+
+# Webshell
+macloader --cli --ws --ws-password pass --out-dir out --name shell.php
+
+# 静态自审
+macloader --cli --inspect out/loader.exe
+```
+
+同一配置想产出逐字节相同的文件，用 `MACLOADER_SEED=<n>` 固定随机序列。
+（v1.3.0 起才真正成立：此前 mingw 写入的 PE `CheckSum` 不受种子控制，
+同种子两次产物仍差一个字段；现在构建时已归零该字段。）
 
 ## ⚠ 改前端前必读
 

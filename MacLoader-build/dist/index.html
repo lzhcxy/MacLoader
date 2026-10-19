@@ -26,9 +26,17 @@
         <svg class="ni" viewBox="0 0 20 20"><rect x="2.4" y="3.4" width="15.2" height="13.2" rx="2"/><path d="M2.4 7.4h15.2"/><path d="M6.2 11.4 8 13.2l3.6-3.6"/></svg>
         C2 免杀
       </button>
-      <button class="navitem" data-view="ws" data-title="Webshell 免杀" data-badge="开发中">
+      <button class="navitem" data-view="matrix" data-title="变体矩阵" data-badge="对照">
+        <svg class="ni" viewBox="0 0 20 20"><rect x="2.6" y="2.6" width="6" height="6" rx="1.2"/><rect x="11.4" y="2.6" width="6" height="6" rx="1.2"/><rect x="2.6" y="11.4" width="6" height="6" rx="1.2"/><rect x="11.4" y="11.4" width="6" height="6" rx="1.2"/></svg>
+        变体矩阵
+      </button>
+      <button class="navitem" data-view="ws" data-title="Webshell 免杀" data-badge="PHP/ASP/ASPX/JSP">
         <svg class="ni" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.4"/><path d="M2.8 10h14.4"/><path d="M10 2.6c2 2.2 3 4.7 3 7.4s-1 5.2-3 7.4c-2-2.2-3-4.7-3-7.4s1-5.2 3-7.4z"/></svg>
         Webshell 免杀
+      </button>
+      <button class="navitem" data-view="inspect" data-title="产物自审" data-badge="静态">
+        <svg class="ni" viewBox="0 0 20 20"><path d="M10 2.6 4 5v5c0 3.5 2.5 6.7 6 7.4 3.5-.7 6-3.9 6-7.4V5z"/><path d="m7.4 10.2 1.9 1.9 3.4-3.6"/></svg>
+        产物自审
       </button>
     </nav>
 
@@ -61,10 +69,12 @@
           <svg class="ic-close" viewBox="0 0 20 20" width="16" height="16"><path d="M5.6 5.6l8.8 8.8M14.4 5.6l-8.8 8.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         </button>
         <button id="genBtn" class="primary">生成 exe</button>
+        <button id="mxBtn" class="primary hidden">生成矩阵</button>
+        <button id="wsBtn" class="primary hidden">生成 webshell</button>
       </div>
     </header>
 
-    <!-- 预设分段控件（替代原来的下拉框） -->
+    <!-- 预设分段控件 -->
     <div class="segbar">
       <div class="segmented" id="segPreset" role="tablist" aria-label="实测预设">
         <button class="seg active" data-preset="">不使用预设</button>
@@ -79,12 +89,269 @@
       </div>
     </div>
 
-    <!-- ============ Webshell 免杀：未开发占位 ============ -->
+    <!-- ==================== 变体矩阵 ==================== -->
+    <div class="pageview" id="matrixView">
+      <div class="mxwrap">
+        <section class="card">
+          <div class="cardhead">
+            <span class="ic"><svg viewBox="0 0 20 20"><rect x="2.6" y="2.6" width="6" height="6" rx="1.2"/><rect x="11.4" y="2.6" width="6" height="6" rx="1.2"/><rect x="2.6" y="11.4" width="6" height="6" rx="1.2"/><rect x="11.4" y="11.4" width="6" height="6" rx="1.2"/></svg></span>
+            <h3>对照实验</h3>
+          </div>
+          <p class="mxdesc">
+            一次生成 16 个 exe，每个相对基线<b>只改一处</b>。
+            拿到实测结果后就能直接归因到那个变量 —— 而不是「一次改一堆，过了不知道是谁的功劳」。
+          </p>
+          <div class="f"><span class="lab">Payload</span>
+            <div class="row">
+              <input id="mxPayload" type="text" placeholder=".bin / .raw / .c / .txt" />
+              <button class="ghost" data-pick="file" data-target="mxPayload">浏览</button>
+            </div>
+          </div>
+          <div class="f"><span class="lab">输出目录</span>
+            <div class="row">
+              <input id="mxDir" type="text" placeholder="留空沿用 C2 页的输出目录" />
+              <button class="ghost" data-pick="dir" data-target="mxDir">选择</button>
+            </div>
+          </div>
+          <div class="f"><span class="lab">基线配置</span>
+            <div class="row">
+              <button class="ghost" id="mxUseCurrent">沿用当前 C2 配置</button>
+              <span class="mxbase" id="mxBase">—</span>
+            </div>
+          </div>
+          <div class="mxprog hidden" id="mxProg">
+            <div class="ob-bar"><i id="mxBar"></i></div>
+            <div class="ob-status" id="mxStatus">准备中…</div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="cardhead">
+            <span class="ic"><svg viewBox="0 0 20 20"><path d="M3.4 4.6h13.2M3.4 10h13.2M3.4 15.4h8.2"/></svg></span>
+            <h3>变体清单</h3>
+            <span class="mxcount" id="mxCount"></span>
+          </div>
+          <div class="mxtabs">
+            <button class="mxtab active" data-mx="c2">C2 矩阵</button>
+            <button class="mxtab" data-mx="ws">Webshell 矩阵</button>
+          </div>
+          <div class="mxpane" id="mxPaneC2">
+          <div class="mxtable">
+            <table id="mxTable">
+              <thead><tr><th>变体</th><th>改动</th><th>大小</th><th>sha256</th><th>360</th><th>火绒</th><th>Defender</th><th></th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="mxempty" id="mxEmpty">还没生成。填好 payload 后点右上「生成矩阵」。</div>
+          </div>
+          <div class="mxpane hidden" id="mxPaneWs">
+            <p class="mxdesc">
+              Webshell 矩阵：对<b>同一种语言</b>穷举不同变换组合，
+              用来判断「哪个变换引起了被杀」。
+            </p>
+            <div class="f"><span class="lab">语言</span>
+              <select id="mxWsLang">
+                <option value="php">PHP</option>
+                <option value="asp">ASP</option>
+                <option value="aspx">ASPX</option>
+                <option value="jsp">JSP</option>
+              </select>
+            </div>
+            <div class="f"><span class="lab">输出目录</span>
+              <div class="row">
+                <input id="mxWsDir" type="text" placeholder="留空 = 临时目录" />
+                <button class="ghost" data-pick="dir" data-target="mxWsDir">选择</button>
+              </div>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <button class="ghost" id="mxWsBtn">生成 Webshell 矩阵</button>
+              <span class="mxcount" id="mxWsCount"></span>
+            </div>
+            <div class="mxtable" style="margin-top:10px">
+              <table id="mxWsTable">
+                <thead><tr><th>变体</th><th>改动</th><th>大小</th><th>sha256</th><th>360</th><th>火绒</th><th>Defender</th><th></th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="mxempty" id="mxWsEmpty">选好语言与输出目录后点「生成 Webshell 矩阵」。</div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ==================== Webshell 免杀 ==================== -->
     <div class="pageview" id="wsView">
-      <div class="phbox">
-        <div class="ph-art"><svg viewBox="0 0 24 24"><path d="M8.6 7.4 3.8 12l4.8 4.6"/><path d="M15.4 7.4 20.2 12l-4.8 4.6"/><path d="M13.4 4.6 10.6 19.4"/></svg></div>
-        <h2>Webshell 免杀</h2>
-        <p>该模块正在开发中，敬请期待</p>
+      <div class="wswrap">
+
+        <!-- ========== 模式切换（与 C2 预设条同款分段控件） ========== -->
+        <div class="wsmodebar">
+          <div class="segmented wsmodes" id="wsModes" role="tablist" aria-label="工作模式">
+            <button class="seg active" data-wsmode="gen">生成新 webshell</button>
+            <button class="seg" data-wsmode="wrap">混淆已有脚本</button>
+          </div>
+          <span class="wshint" id="wsModeHint">从零生成，或把自己的脚本拿来混淆</span>
+        </div>
+
+        <!-- ================= 模式 A：生成新 webshell ================= -->
+        <div class="wspane" id="wsPaneGen">
+
+          <section class="card">
+            <div class="cardhead">
+              <span class="ic"><svg viewBox="0 0 20 20"><path d="M8.6 7.4 3.8 12l4.8 4.6"/><path d="M15.4 7.4 20.2 12l-4.8 4.6"/><path d="M13.4 4.6 10.6 19.4"/></svg></span>
+              <h3>基本设置</h3>
+            </div>
+            <div class="g2">
+              <div class="f"><span class="lab">语言</span>
+                <select id="wsLang">
+                  <option value="php">PHP</option>
+                  <option value="asp">ASP（经典 VBScript）</option>
+                  <option value="aspx">ASPX（C#）</option>
+                  <option value="jsp">JSP（Java）</option>
+                </select></div>
+              <div class="f"><span class="lab">载荷类型</span>
+                <select id="wsKind">
+                  <option value="exec">命令执行</option>
+                  <option value="cmd">命令回显</option>
+                  <option value="shellcode">Shellcode（十六进制）</option>
+                  <option value="eval">代码执行</option>
+                </select></div>
+            </div>
+            <div class="f"><span class="lab">连接参数名</span>
+              <input id="wsPassword" type="text" value="pass" placeholder="例如 pass，运行时用 ?pass=命令" /></div>
+            <div class="f hidden" id="wsHexRow"><span class="lab">Shellcode（十六进制）</span>
+              <textarea id="wsHex" rows="4" placeholder="9090cc…"></textarea></div>
+          </section>
+
+          <section class="card">
+            <div class="cardhead">
+              <span class="ic"><svg viewBox="0 0 20 20"><path d="M7.2 6.2 3.4 10l3.8 3.8"/><path d="M12.8 6.2 16.6 10l-3.8 3.8"/></svg></span>
+              <h3>编码链与混淆</h3>
+            </div>
+            <div class="f"><span class="lab">编码链（按顺序套用）</span>
+              <div class="encchain" id="wsEncChain">
+                <label class="cb"><input type="checkbox" value="xor" checked /><b>XOR 单字节</b></label>
+                <label class="cb"><input type="checkbox" value="b64" checked /><b>Base64</b></label>
+                <label class="cb"><input type="checkbox" value="rev" /><b>字节逆序</b></label>
+                <label class="cb"><input type="checkbox" value="chunk" /><b>分块插桩</b></label>
+              </div>
+            </div>
+            <hr class="sep" />
+            <div class="cbgrid">
+              <label class="cb"><input type="checkbox" id="wsRename" checked /><b>变量名随机化</b></label>
+              <label class="cb"><input type="checkbox" id="wsJunk" checked /><b>插入垃圾代码</b></label>
+              <label class="cb"><input type="checkbox" id="wsSplit" checked /><b>字符串拆分拼接</b></label>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="cardhead">
+              <span class="ic"><svg viewBox="0 0 20 20"><path d="M11.6 2.5H6.2a1.7 1.7 0 0 0-1.7 1.7v11.6a1.7 1.7 0 0 0 1.7 1.7h7.6a1.7 1.7 0 0 0 1.7-1.7V6.4z"/><path d="M11.6 2.5v3.9h3.9"/></svg></span>
+              <h3>输出</h3>
+            </div>
+            <div class="g2">
+              <div class="f"><span class="lab">输出文件名</span>
+                <input id="wsName" type="text" value="shell.php" /></div>
+              <div class="f"><span class="lab">输出目录</span>
+                <div class="row">
+                  <input id="wsDir" type="text" placeholder="留空 = 临时目录" />
+                  <button class="ghost" data-pick="dir" data-target="wsDir">选择</button>
+                </div>
+              </div>
+            </div>
+            <div class="f"><span class="lab">预览</span>
+              <pre id="wsPreview" class="wspreview">生成后在这里显示（也可直接复制）。</pre>
+            </div>
+          </section>
+        </div>
+
+        <!-- ================= 模式 B：混淆已有脚本 ================= -->
+        <div class="wspane hidden" id="wsPaneWrap">
+
+          <section class="card">
+            <div class="cardhead">
+              <span class="ic"><svg viewBox="0 0 20 20"><path d="M11.6 2.5H6.2a1.7 1.7 0 0 0-1.7 1.7v11.6a1.7 1.7 0 0 0 1.7 1.7h7.6a1.7 1.7 0 0 0 1.7-1.7V6.4z"/><path d="M11.6 2.5v3.9h3.9"/></svg></span>
+              <h3>源脚本</h3>
+            </div>
+            <div class="f"><span class="lab">待混淆的脚本</span>
+              <div class="row">
+                <input id="wrapSrc" type="text" placeholder="你的 .php / .asp / .aspx / .jsp" />
+                <button class="ghost" data-pick="wsfile" data-target="wrapSrc">浏览</button>
+              </div>
+            </div>
+            <div class="g2">
+              <div class="f"><span class="lab">语言</span>
+                <select id="wrapLang">
+                  <option value="php">PHP</option>
+                  <option value="asp">ASP（经典 VBScript）</option>
+                  <option value="aspx">ASPX（C#）</option>
+                  <option value="jsp">JSP（Java）</option>
+                </select></div>
+              <div class="f"><span class="lab">输出文件名</span>
+                <input id="wrapName" type="text" placeholder="留空 = 原名_obf" /></div>
+            </div>
+            <div class="f"><span class="lab">输出目录</span>
+              <div class="row">
+                <input id="wrapDir" type="text" placeholder="留空 = 临时目录" />
+                <button class="ghost" data-pick="dir" data-target="wrapDir">选择</button>
+              </div>
+            </div>
+            <p class="wsnote" id="wrapNote"></p>
+          </section>
+
+          <section class="card">
+            <div class="cardhead">
+              <span class="ic"><svg viewBox="0 0 20 20"><path d="M7.2 6.2 3.4 10l3.8 3.8"/><path d="M12.8 6.2 16.6 10l-3.8 3.8"/></svg></span>
+              <h3>混淆强度</h3>
+            </div>
+            <div class="f"><span class="lab">主开关</span>
+              <div class="cbgrid">
+                <label class="cb"><input type="checkbox" id="wrapWhole" checked /><b>整体编码（原文不可见）</b></label>
+              </div>
+            </div>
+            <hr class="sep" />
+            <div class="cbgrid">
+              <label class="cb"><input type="checkbox" id="wrapStrip" checked /><b>剥离原有注释</b></label>
+              <label class="cb"><input type="checkbox" id="wrapJunk" checked /><b>插入垃圾代码</b></label>
+              <label class="cb"><input type="checkbox" id="wrapSplit" checked /><b>字符串拆分拼接</b></label>
+              <label class="cb"><input type="checkbox" id="wrapRename" checked /><b>变量名随机化</b></label>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="cardhead">
+              <span class="ic"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.3"/><path d="M10 5.8V10l2.9 1.8"/></svg></span>
+              <h3>结果预览</h3>
+            </div>
+            <div class="f"><span class="lab">混淆后内容</span>
+              <pre id="wrapPreview" class="wspreview">混淆后在这里显示。</pre>
+            </div>
+          </section>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="pageview" id="inspectView">
+      <div class="inswrap">
+        <section class="card">
+          <div class="cardhead">
+            <span class="ic"><svg viewBox="0 0 20 20"><path d="M10 2.6 4 5v5c0 3.5 2.5 6.7 6 7.4 3.5-.7 6-3.9 6-7.4V5z"/><path d="m7.4 10.2 1.9 1.9 3.4-3.6"/></svg></span>
+            <h3>静态自审</h3>
+          </div>
+          <div class="f"><span class="lab">产物路径</span>
+            <div class="row">
+              <input id="insPath" type="text" placeholder="选择要检查的 exe" />
+              <button class="ghost" data-pick="exe" data-target="insPath">浏览</button>
+              <button class="ghost" id="insBtn">检查</button>
+            </div>
+          </div>
+          <div id="insReport" class="insreport hidden">
+            <div class="insscore"><span id="insScore">—</span><small>/100</small></div>
+            <dl class="insmeta" id="insMeta"></dl>
+            <ul class="inslist" id="insList"></ul>
+          </div>
+          <div class="insempty" id="insEmpty">选一个刚生成的 exe，看看它在静态引擎眼里长什么样。</div>
+        </section>
       </div>
     </div>
 
@@ -104,6 +371,30 @@
             </select>
           </div>
         </section>
+
+        <section class="card">
+          <div class="cardhead">
+            <span class="ic"><svg viewBox="0 0 20 20"><path d="M11.6 2.5H6.2a1.7 1.7 0 0 0-1.7 1.7v11.6a1.7 1.7 0 0 0 1.7 1.7h7.6a1.7 1.7 0 0 0 1.7-1.7V6.4z"/><path d="M11.6 2.5v3.9h3.9"/></svg></span>
+            <h3>配置方案</h3>
+          </div>
+          <div class="f"><span class="lab">方案名</span>
+            <div class="row">
+              <input id="profName" type="text" placeholder="例如：过 360 的那组" />
+              <button class="ghost" id="profSave">保存当前</button>
+            </div>
+          </div>
+          <div class="f"><span class="lab">已保存</span>
+            <div id="profList" class="proflist"></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="cardhead">
+            <span class="ic"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.3"/><circle cx="10" cy="10" r="3.4"/></svg></span>
+            <h3>编译环境</h3>
+          </div>
+          <div id="envDetail" class="envdetail"></div>
+        </section>
       </div>
     </div>
 
@@ -114,10 +405,14 @@
         <h2>MacLoader</h2>
         <p class="about-sub">macOS 免杀马生成器</p>
         <dl class="about-rows">
-          <div class="arow"><dt>版本</dt><dd>1.1.0</dd></div>
+          <div class="arow"><dt>版本</dt><dd id="abVer">1.2.0</dd></div>
           <div class="arow"><dt>构建</dt><dd class="mono">Tauri 2 · Rust (arm64)</dd></div>
           <div class="arow"><dt>产物平台</dt><dd class="mono">Windows PE · x64 / x86</dd></div>
+          <div class="arow"><dt>Webshell</dt><dd class="mono">PHP · ASP · ASPX · JSP</dd></div>
         </dl>
+        <p class="about-note">
+          设置 <code>MACLOADER_SEED=&lt;n&gt;</code> 可固定随机序列，让同一配置两次构建逐字节相同。
+        </p>
       </div>
     </div>
 
@@ -196,6 +491,19 @@
               <small id="modeWarn" class="warn hidden">⚠ fiber / callback 实测被 360 查杀，仅 direct 通过</small>
               <label class="cb"><input type="checkbox" id="h_obf" checked /><b>编译期代码随机化</b></label>
               <label class="cb"><input type="checkbox" id="h_anti" /><b>反分析严格模式</b></label>
+
+              <div class="hardengroup">
+                <div class="hardentitle">免杀增强 <span class="hardenhint">（默认全关，逐项实测后再开）</span></div>
+                <label class="cb"><input type="checkbox" id="h_unhook" /><b>unhook</b> <span class="cbsub">恢复被 hook 的 ntdll</span></label>
+                <label class="cb"><input type="checkbox" id="h_etw" /><b>etw</b> <span class="cbsub">屏蔽 EtwEventWrite</span></label>
+                <label class="cb"><input type="checkbox" id="h_indirect" /><b>indirect</b> <span class="cbsub">syscall 跳板来自 ntdll</span></label>
+                <label class="cb"><input type="checkbox" id="h_diskssn" /><b>diskssn</b> <span class="cbsub">从磁盘干净副本解析 SSN</span></label>
+                <label class="cb"><input type="checkbox" id="h_stomp" /><b>stomp</b> <span class="cbsub">模块踩踏（写入白 DLL 的 .text）</span></label>
+                <div class="f hidden" id="stompRow"><span class="lab">踩踏目标</span>
+                  <input id="stompDll" type="text" placeholder="winhttp.dll" />
+                </div>
+                <small id="stompWarn" class="warn hidden">⚠ stomp 与「自动 / RWX」互斥：踩踏会改写已签名 DLL 的页面属性，请保持内存保护 = 仅 RX</small>
+              </div>
             </section>
             <section class="card">
               <div class="cardhead">
@@ -217,13 +525,13 @@
           <div class="col">
             <section class="card">
               <div class="cardhead">
-                <span class="ic"><svg viewBox="0 0 20 20"><path d="M10 2.6 4 5v5c0 3.5 2.5 6.7 6 7.4 3.5-.7 6-3.9 6-7.4V5z"/><path d="m7.4 10.2 1.9 1.9 3.4-3.6"/></svg></span>
+                <span class="ic"><svg viewBox="0 0 20 20"><path d="M13.6 8.4 8.7 13.3a2.4 2.4 0 0 1-3.4-3.4l5.6-5.6a3.2 3.2 0 0 1 4.5 4.5l-5.6 5.6"/></svg></span>
                 <h3>资源与签名</h3>
               </div>
               <label class="cb"><input type="checkbox" id="h_res" checked /><b>完整资源伪装</b></label>
               <label class="cb"><input type="checkbox" id="h_sign" checked /><b>Authenticode 自签名</b></label>
-              <div class="f"><span class="lab">时间戳服务器 (TSA)</span>
-                <input id="tsaUrl" type="text" value="http://tsa.wotrus.com" /></div>
+              <div class="f"><span class="lab">证书主题（留空自动推导）</span>
+                <input id="certSubj" type="text" placeholder="/C=US/O=…/CN=…" /></div>
             </section>
             <section class="card">
               <div class="cardhead">
