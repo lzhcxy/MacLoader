@@ -26,3 +26,9 @@ _backup/
 # Python 缓存
 tools/__pycache__/
 __pycache__/
+
+# ------------------------- Windows 交叉编译产物 -------------------------
+# 由 tools/build_windows.sh 产出的 exe 约 11MB，不进版本库。
+# 注意 icons/icon.ico 是 Windows 构建的必需输入且只有 ~78KB，已纳入版本库；
+# 缺失时 build_windows.sh 会自动从 icon.png 生成。
+MacLoader-build/dist-windows/*.exe

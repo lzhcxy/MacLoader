@@ -216,10 +216,29 @@ fn dep_evt(phase: &str, pkg: &str, line: &str, step: usize, total: usize) -> Dep
     }
 }
 
-/// Homebrew 是否已安装
+/// 包管理器是否已安装（Windows 恒为 false）
 #[tauri::command]
 fn has_brew() -> bool {
     builder::tools::brew().is_some()
+}
+
+/// 平台信息：宿主 OS / 是否支持自动装依赖 / 手工安装指引
+#[derive(Clone, serde::Serialize)]
+struct HostInfo {
+    os: String,
+    can_install: bool,
+    pkg_manager: String,
+    install_hint: String,
+}
+
+#[tauri::command]
+fn host_info() -> HostInfo {
+    HostInfo {
+        os: builder::platform::host_os().to_string(),
+        can_install: builder::platform::supports_dep_install(),
+        pkg_manager: builder::platform::package_manager_name().to_string(),
+        install_hint: builder::platform::install_hint(),
+    }
 }
 
 const ALLOWED_BREW_PACKAGES: &[&str] = &["mingw-w64", "osslsigncode"];
@@ -249,16 +268,24 @@ async fn install_deps(app: tauri::AppHandle, pkgs: Vec<String>) -> Result<(), St
     if total == 0 {
         return Ok(());
     }
-    let brew = builder::tools::brew()
-        .ok_or_else(|| "未找到 brew（PATH 与 /opt/homebrew/bin 下都没有）".to_string())?;
+    // 走平台层：macOS 拿到 (brew, ["install", pkg])，
+    // 其它平台返回 None 并由上面给出的指引文案兜底。
+    let (mgr, mgr_args) = builder::platform::install_command().ok_or_else(|| {
+        format!(
+            "当前平台（{}）不提供自动安装依赖。\n{}",
+            builder::platform::host_os(),
+            builder::platform::install_hint()
+        )
+    })?;
 
     tauri::async_runtime::spawn_blocking(move || -> Result<(), String> {
         for (i, pkg) in pkgs.iter().enumerate() {
             let step = i + 1;
             let _ = app.emit("dep-install", dep_evt("start", pkg, "", step, total));
 
-            let mut child = Command::new(&brew)
-                .args(["install", pkg])
+            let mut child = Command::new(&mgr)
+                .args(mgr_args.iter().map(|a| a.as_str()))
+                .arg(pkg)
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
                 .spawn()
@@ -714,13 +741,20 @@ fn run_cli(argv: &[String]) -> i32 {
 /* ============================ main ============================ */
 
 fn main() {
-    // macOS GUI app 从 Finder/Dock 启动时 PATH 极其贫瘠（不含 /opt/homebrew/bin），
-    // 会导致 brew / osslsigncode 等外部工具「明明装了却找不到」。这里补齐，
-    // 之后所有 Command 与 which() 都能命中。
-    let cur_path = std::env::var("PATH").unwrap_or_default();
-    let std_path = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
-    if !cur_path.split(':').any(|d| d == "/opt/homebrew/bin") {
-        std::env::set_var("PATH", format!("{std_path}:{cur_path}"));
+    // 桌面环境启动的 GUI 进程 PATH 可能很贫瘠（macOS 从 Finder 启动不含
+    // /opt/homebrew/bin），会导致 brew / osslsigncode 等外部工具
+    // 「明明装了却找不到」。这里补齐，之后所有 Command 与 which() 都能命中。
+    // Windows 不需要（注册表 PATH 已完整，见 platform::bootstrap_path）。
+    let std_path = builder::platform::bootstrap_path();
+    if !std_path.is_empty() {
+        let cur_path = std::env::var("PATH").unwrap_or_default();
+        let sep = builder::platform::path_sep();
+        if !cur_path
+            .split(sep)
+            .any(|d| d == "/opt/homebrew/bin")
+        {
+            std::env::set_var("PATH", format!("{std_path}{sep}{cur_path}"));
+        }
     }
 
     let argv: Vec<String> = std::env::args().collect();
@@ -737,6 +771,7 @@ fn main() {
             app_version,
             check_env,
             has_brew,
+            host_info,
             install_deps,
             list_icons,
             pick_file,

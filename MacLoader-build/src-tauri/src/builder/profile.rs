@@ -22,8 +22,7 @@ pub fn dir() -> PathBuf {
     if let Some(path) = std::env::var_os(CONFIG_DIR_ENV) {
         return PathBuf::from(path);
     }
-    let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
-    PathBuf::from(home).join(".macloader").join("profiles")
+    crate::builder::platform::config_root().join("profiles")
 }
 
 fn now() -> u64 {

@@ -11,10 +11,10 @@ use std::process::Command;
 use crate::builder::hash::short;
 use crate::builder::tools::{osslsigncode, openssl};
 
-/// 证书缓存位置：$HOME/.macloader/
+/// 证书缓存位置。macOS/Linux 为 `$HOME/.macloader`，
+/// Windows 为 `%APPDATA%\\MacLoader`（见 [`platform::config_root`]）。
 pub fn cert_dir() -> PathBuf {
-    let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
-    PathBuf::from(home).join(".macloader")
+    crate::builder::platform::config_root()
 }
 
 /// 确保存在与 subject 对应的自签代码签名证书 + PFX，返回（pfx 路径，密码）

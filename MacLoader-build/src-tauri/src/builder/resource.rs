@@ -8,7 +8,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use crate::builder::tools::{find, windres};
+use crate::builder::tools::windres;
 use crate::builder::LIB_ICONS;
 
 /// 版本信息里的字符串：与所选图标保持一致。
@@ -52,52 +52,12 @@ pub fn resolve_subject(opts: &crate::builder::GenOpts) -> String {
     }
 }
 
-/// 把任意 png/jpg 转成多尺寸 .ico（借 macOS 自带 sips 缩放，再手工组 ICO 容器）
+/// 把任意 png/jpg 转成多尺寸 .ico。
+///
+/// macOS 借自带的 sips 缩放；Windows 用 magick 或单尺寸兜底。
+/// 平台差异全部收在 [`platform::convert_to_ico`] 里。
 pub fn ico_from_image(src: &str, tmp: &Path) -> Result<Vec<u8>, String> {
-    let sips = find(&["sips"]).unwrap_or_else(|| "sips".to_string());
-    let mut pngs: Vec<(u32, Vec<u8>)> = Vec::new();
-    for s in [16u32, 32, 48, 64, 128, 256] {
-        let dst = tmp.join(format!("s{s}.png"));
-        let ok = Command::new(&sips)
-            .args(["-z", &s.to_string(), &s.to_string(), src, "--out"])
-            .arg(&dst)
-            .output()
-            .map(|o| o.status.success())
-            .unwrap_or(false);
-        if !ok {
-            continue;
-        }
-        if let Ok(d) = fs::read(&dst) {
-            if d.len() > 8 && &d[1..4] == b"PNG" {
-                pngs.push((s, d));
-            }
-        }
-    }
-    if pngs.is_empty() {
-        return Err("图片转换失败（缺 sips 或不支持的格式）".into());
-    }
-    let n = pngs.len();
-    let mut out = Vec::new();
-    out.extend_from_slice(&0u16.to_le_bytes()); // reserved
-    out.extend_from_slice(&1u16.to_le_bytes()); // type = icon
-    out.extend_from_slice(&(n as u16).to_le_bytes());
-    let mut off = 6 + 16 * n;
-    for (s, d) in &pngs {
-        let b = if *s >= 256 { 0u8 } else { *s as u8 };
-        out.push(b);
-        out.push(b);
-        out.push(0);
-        out.push(0);
-        out.extend_from_slice(&1u16.to_le_bytes()); // planes
-        out.extend_from_slice(&32u16.to_le_bytes()); // bpp
-        out.extend_from_slice(&(d.len() as u32).to_le_bytes());
-        out.extend_from_slice(&(off as u32).to_le_bytes());
-        off += d.len();
-    }
-    for (_, d) in &pngs {
-        out.extend_from_slice(d);
-    }
-    Ok(out)
+    crate::builder::platform::convert_to_ico(src, tmp)
 }
 
 /// 按图标规格取出 ico 字节（内置库 or 外部文件）

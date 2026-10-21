@@ -32,7 +32,13 @@
       "app"
     ],
     "icon": [
-      "icons/icon.png"
-    ]
+      "icons/icon.png",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    }
   }
 }

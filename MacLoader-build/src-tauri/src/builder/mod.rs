@@ -5,7 +5,8 @@
 //!
 //! | 子模块 | 职责 |
 //! |---|---|
-//! | [`tools`] | 外部工具探测（PATH + Homebrew 目录） |
+//! | [`tools`] | 外部工具探测（PATH + 平台常见目录） |
+//! | [`platform`] | 平台差异抽象：配置目录 / PATH / 图片转 ICO / 依赖安装 |
 //! | [`rng`] | 有状态 PRNG（支持 `MACLOADER_SEED` 复现） |
 //! | [`hash`] | 无依赖 SHA-256（用于证书缓存与产物自审） |
 //! | [`encode`] | payload 的各种 C 源码形态：UUID / Base64 / Base32 / 分块 |
@@ -24,6 +25,7 @@ pub mod hash;
 pub mod inspect;
 pub mod payload;
 pub mod pe;
+pub mod platform;
 pub mod profile;
 pub mod resource;
 pub mod rng;
